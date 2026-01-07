@@ -1,0 +1,721 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  STUDENT
+  MODERATOR
+  ADMIN
+}
+
+enum SessionType {
+  POMODORO
+  DEEP_WORK
+  MARATHON
+  CUSTOM
+}
+
+enum ExpenseCategory {
+  FOOD
+  TRANSPORT
+  BOOKS
+  ENTERTAINMENT
+  UTILITIES
+  HEALTH
+  OTHER
+}
+
+enum IncomeCategory {
+  SALARY
+  ALLOWANCE
+  SCHOLARSHIP
+  FREELANCE
+  OTHER
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum NotificationType {
+  EXAM_REMINDER
+  DEADLINE_ALERT
+  FOCUS_SESSION
+  STREAK_WARNING
+  SYSTEM
+  MEDITATION_REMINDER
+  TECHNIQUE_PROMPT
+  HABIT_CHECK_IN
+  ROUTINE_REMINDER
+  WELLNESS_CHECK
+}
+
+enum RecommendationType {
+  STUDY_TIME
+  FOCUS_DURATION
+  SUBJECT_PRIORITY
+  BREAK_REMINDER
+  WORKLOAD_ADJUSTMENT
+  STUDY_TECHNIQUE_SUGGESTION
+  MEDITATION_REMINDER
+  HABIT_CHALLENGE_PROMPT
+  ROUTINE_OPTIMIZATION
+  WELLNESS_CHECK
+}
+
+enum StudyTechniqueType {
+  FLASHCARD
+  PRACTICE_QUESTION
+  FEYNMAN_TECHNIQUE
+  BLURTING_METHOD
+  SPACED_REPETITION
+  PAST_PAPER
+  INTERLEAVED_PRACTICE
+  RETRIEVAL_LADDER
+  CORNELL_NOTE_TAKING
+  BLUR_TEACH_METHOD
+  ACTIVE_ERROR_LOG
+  POMODORO_PLUS
+}
+
+enum MeditationType {
+  MINDFULNESS
+  BREATHING_EXERCISE
+  GUIDED_VISUALIZATION
+  BODY_SCAN
+  GROUNDING_54321
+  MANTRA_MEDITATION
+  ALPHA_STATE_BREATHING
+}
+
+enum HabitChallengeType {
+  MEDITATION_21_DAY
+  ACTIVE_RECALL_21_DAY
+  POMODORO_21_DAY
+  CUSTOM
+}
+
+enum DailyRoutineSlot {
+  MORNING_MEDITATION
+  STUDY_SESSION
+  BREAK_EXERCISE
+  END_DAY_RECALL
+  BEDTIME_MEDITATION
+}
+
+enum MaterialType {
+  PDF
+  YOUTUBE
+  ARTICLE
+  GOOGLE_DRIVE
+  CUSTOM
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         UserRole @default(STUDENT)
+  profileImage String?
+  bio          String?
+  university   String?
+  major        String?
+  xp           Int      @default(0) 
+  level        Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  subjects         Subject[]
+  courses          Course[]
+  classSchedules   ClassSchedule[]
+  studyPlans       StudyPlan[]
+  notes            Note[]
+  sharedNotes      NoteShare[]
+  budgets          Budget[]
+  expenses         Expense[]
+  incomes          Income[]
+  exams            Exam[]
+  studyGroups      StudyGroup[]
+  groupMemberships GroupMember[]
+  studySessions    StudySession[]
+  streaks          StudyStreak[]
+  readingMaterials ReadingMaterial[]
+  analytics        AIAnalytics[]
+  notifications    Notification[]
+  recommendations  AIRecommendation[]
+  studyTechniques  StudyTechnique[]
+  meditationSessions MeditationSession[]
+  habitChallenges  HabitChallenge[]
+  dailyRoutines    DailyRoutine[]
+  wellnessActivities WellnessActivity[]
+  userBadges       UserBadge[]
+  aiVivaSessions   AIVivaSession[]
+  noteRatings      NoteRating[]
+  aiChatSessions   AIChatSession[]
+
+  @@map("users")
+}
+
+model Subject {
+  id          String  @id @default(uuid())
+  name        String
+  code        String?
+  description String?
+  color       String? 
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses          Course[]
+  classSchedules   ClassSchedule[]
+  studyPlans       StudyPlan[]
+  notes            Note[]
+  exams            Exam[]
+  studySessions    StudySession[]
+  readingMaterials ReadingMaterial[]
+  studyTechniques  StudyTechnique[]
+  aiVivaSessions   AIVivaSession[]
+
+  @@map("subjects")
+}
+
+model Course {
+  id         String  @id @default(uuid())
+  name       String
+  semester   String
+  year       Int
+  credits    Int?
+  instructor String?
+  subjectId  String
+  userId     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("courses")
+}
+
+model ClassSchedule {
+  id        String  @id @default(uuid())
+  title     String
+  dayOfWeek Int 
+  startTime String 
+  endTime   String 
+  location  String?
+  subjectId String
+  userId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("class_schedules")
+}
+
+model StudyPlan {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  subjectId   String?
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks   StudyTask[]
+
+  @@map("study_plans")
+}
+
+model StudyTask {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  deadline    DateTime?
+  completed   Boolean   @default(false)
+  priority    Int       @default(0) 
+  studyPlanId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  @@map("study_tasks")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  tags      String[] 
+  isPublic  Boolean  @default(false) 
+  price     Float    @default(0.0)   
+  averageRating Float @default(0.0) 
+  subjectId String?
+  userId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares  NoteShare[]
+  ratings NoteRating[]
+
+  @@map("notes")
+}
+
+model NoteShare {
+  id           String  @id @default(uuid())
+  noteId       String
+  sharedWithId String
+  canEdit      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  note       Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  sharedWith User @relation(fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, sharedWithId])
+  @@map("note_shares")
+}
+
+model Budget {
+  id          String @id @default(uuid())
+  name        String
+  totalBudget Float
+  month       Int 
+  year        Int
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+  incomes  Income[]
+
+  @@map("budgets")
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  amount      Float
+  category    ExpenseCategory
+  description String?
+  date        DateTime        @default(now())
+  budgetId    String?
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  budget Budget? @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model Income {
+  id          String         @id @default(uuid())
+  amount      Float
+  category    IncomeCategory
+  description String?
+  date        DateTime       @default(now())
+  budgetId    String?
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  budget Budget? @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("incomes")
+}
+
+model Exam {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  examDate    DateTime
+  duration    Int? 
+  subjectId   String?
+  userId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject   Subject?   @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@map("exams")
+}
+
+model Question {
+  id            String           @id @default(uuid())
+  questionText  String
+  options       String[] 
+  correctAnswer String?
+  difficulty    DifficultyLevel?
+  aiGenerated   Boolean          @default(false)
+  examId        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exam    Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         String  @id @default(uuid())
+  answerText String
+  isCorrect  Boolean @default(false)
+  score      Float?
+  questionId String
+
+  createdAt DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+model StudyGroup {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members   GroupMember[]
+
+  @@map("study_groups")
+}
+
+model GroupMember {
+  id       String   @id @default(uuid())
+  groupId  String
+  userId   String
+  role     String   @default("MEMBER") 
+  joinedAt DateTime @default(now())
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model StudySession {
+  id           String    @id @default(uuid())
+  startTime    DateTime
+  endTime      DateTime?
+  duration     Int? 
+  productivity Int? 
+  notes        String?
+  subjectId    String?
+  userId       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject       Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  focusSessions FocusSession[]
+
+  @@map("study_sessions")
+}
+
+model FocusSession {
+  id             String      @id @default(uuid())
+  sessionType    SessionType
+  duration       Int 
+  completed      Boolean     @default(false)
+  studySessionId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studySession StudySession @relation(fields: [studySessionId], references: [id], onDelete: Cascade)
+
+  @@map("focus_sessions")
+}
+
+model StudyStreak {
+  id            String    @id @default(uuid())
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastStudyDate DateTime?
+  userId        String    @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_streaks")
+}
+
+model ReadingMaterial {
+  id         String           @id @default(uuid())
+  title      String
+  type       MaterialType     @default(PDF)
+  content    String?          
+  fileUrl    String?          
+  topics     String[] 
+  difficulty DifficultyLevel?
+  summary    String? 
+  metadata   Json?            
+  subjectId  String?
+  userId     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatSessions AIChatSession[]
+
+  @@map("reading_materials")
+}
+
+model AIAnalytics {
+  id                  String   @id @default(uuid())
+  reportType          String 
+  totalStudyTime      Int 
+  averageProductivity Float
+  strengths           String[] 
+  weaknesses          String[] 
+  recommendations     String[] 
+  generatedAt         DateTime @default(now())
+  userId              String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analytics")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?            
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AIRecommendation {
+  id          String             @id @default(uuid())
+  userId      String
+  type        RecommendationType
+  title       String
+  description String
+  priority    Int                @default(0) 
+  metadata    Json?              
+  isApplied   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_recommendations")
+}
+
+model StudyTechnique {
+  id              String             @id @default(uuid())
+  type            StudyTechniqueType
+  userId          String
+  subjectId       String?
+  name            String             @default("Study Session")
+  description     String?
+  duration        Int?               
+  effectiveness   Int?               
+  confidenceLevel Int?               
+  notes           String?
+  metadata        Json?              
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@map("study_techniques")
+}
+
+model MeditationSession {
+  id             String          @id @default(uuid())
+  type           MeditationType
+  userId         String
+  duration       Int             
+  stressLevelBefore Int?         
+  stressLevelAfter  Int?         
+  notes          String?
+  completed      Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("meditation_sessions")
+}
+
+model HabitChallenge {
+  id             String             @id @default(uuid())
+  userId         String
+  type           HabitChallengeType
+  title          String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime?
+  targetDuration Int                
+  progress       Int              
+  currentStreak  Int                @default(0)
+  longestStreak  Int                @default(0)
+  isCompleted    Boolean            @default(false)
+  checkIns       Json?              
+  
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("habit_challenges")
+}
+
+model DailyRoutine {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String   @default("My Routine")
+  isActive    Boolean  @default(true)
+  activities  Json     
+  metadata    Json?    
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("daily_routines")
+}
+
+model WellnessActivity {
+   id          String   @id @default(uuid())
+   userId      String
+   activityType String 
+   duration    Int?     
+   rating      Int?     
+   notes       String?
+   date        DateTime @default(now())
+   
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@map("wellness_activities")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  imageUrl    String?
+  criteria    Json     
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model AIVivaSession {
+  id           String   @id @default(uuid())
+  userId       String
+  subjectId    String?
+  topic        String
+  score        Float?   
+  feedback     String?  
+  transcript   Json?   
+  status       String   @default("IN_PROGRESS") 
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@map("ai_viva_sessions")
+}
+
+model NoteRating {
+  id        String   @id @default(uuid())
+  noteId    String
+  userId    String
+  rating    Int      
+  comment   String?
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId])
+  @@map("note_ratings")
+}
+
+model AIChatSession {
+  id                String   @id @default(uuid())
+  userId            String
+  readingMaterialId String
+  messages          Json    
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readingMaterial ReadingMaterial @relation(fields: [readingMaterialId], references: [id], onDelete: Cascade)
+
+  @@map("ai_chat_sessions")
+}
