@@ -16,11 +16,7 @@ exports.AIRecommendationService = void 0;
 const client_1 = require("@prisma/client");
 const ApiError_1 = __importDefault(require("../../errors/ApiError"));
 const prisma_1 = __importDefault(require("../../shared/prisma"));
-/**
- * Analyze user's study patterns
- */
 const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    // Get all study sessions for the user
     const studySessions = yield prisma_1.default.studySession.findMany({
         where: { userId },
         include: {
@@ -29,12 +25,11 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
         orderBy: {
             startTime: "desc",
         },
-        take: 100, // Analyze last 100 sessions
+        take: 100,
     });
     if (studySessions.length === 0) {
         throw new ApiError_1.default(404, "No study sessions found for analysis");
     }
-    // Calculate total study time and average session duration
     let totalStudyTime = 0;
     let totalProductivity = 0;
     const hourDistribution = {};
@@ -44,10 +39,8 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
         const productivity = session.productivity || 0;
         totalStudyTime += duration;
         totalProductivity += productivity;
-        // Track study hour preferences
         const hour = new Date(session.startTime).getHours();
         hourDistribution[hour] = (hourDistribution[hour] || 0) + 1;
-        // Track subject performance
         if (session.subject) {
             if (!subjectPerformance[session.subject.name]) {
                 subjectPerformance[session.subject.name] = { time: 0, productivity: 0 };
@@ -56,24 +49,20 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
             subjectPerformance[session.subject.name].productivity += productivity;
         }
     });
-    // Find preferred study hours (top 3)
     const preferredStudyHours = Object.entries(hourDistribution)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
         .map(([hour]) => parseInt(hour));
-    // Identify weak and strong subjects
     const subjects = Object.entries(subjectPerformance).map(([name, data]) => ({
         name,
-        avgProductivity: data.productivity / (data.time / 60), // Productivity per hour
+        avgProductivity: data.productivity / (data.time / 60),
     }));
     subjects.sort((a, b) => a.avgProductivity - b.avgProductivity);
     const weakSubjects = subjects.slice(0, 3).map((s) => s.name);
     const strongSubjects = subjects.slice(-3).map((s) => s.name);
-    // Get streak data
     const streak = yield prisma_1.default.studyStreak.findUnique({
         where: { userId },
     });
-    // Get wellness data (last 30 days)
     const wellnessActivities = yield prisma_1.default.meditationSession.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
@@ -88,7 +77,6 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
         }
     });
     const averageStress = stressCount > 0 ? totalStress / stressCount : 0;
-    // Get study technique effectiveness
     const techniqueSessions = yield prisma_1.default.studyTechnique.findMany({
         where: { userId },
         take: 50,
@@ -105,22 +93,17 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
             techniqueCount[session.type]++;
         }
     });
-    // Normalize effectiveness
     Object.keys(techniqueEffectiveness).forEach(key => {
         techniqueEffectiveness[key] = techniqueEffectiveness[key] / techniqueCount[key];
     });
-    // Identify Correlated Weaknesses
     const correlatedWeaknesses = [];
-    // Pattern 1: High Stress + Low Productivity = Exam Anxiety
     if (averageStress > 7 && (totalProductivity / studySessions.length) < 50) {
         correlatedWeaknesses.push("PERFORMANCE_ANXIETY");
     }
-    // Pattern 2: Short Sessions + Low Effectiveness = Attention Deficit
     const avgDuration = totalStudyTime / studySessions.length;
     if (avgDuration < 20 && Object.values(techniqueEffectiveness).some(v => v < 3)) {
         correlatedWeaknesses.push("FOCUS_RETENTION_ISSUE");
     }
-    // Pattern 3: High Study Time + Low Grades/Effectiveness = Inefficient Method
     if (avgDuration > 60 && Object.values(techniqueEffectiveness).every(v => v < 3)) {
         correlatedWeaknesses.push("INEFFICIENT_STUDY_METHOD");
     }
@@ -144,13 +127,9 @@ const analyzeStudyPatterns = (userId) => __awaiter(void 0, void 0, void 0, funct
         correlatedWeaknesses
     };
 });
-/**
- * Generate AI recommendations based on study patterns
- */
 const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const patterns = yield analyzeStudyPatterns(userId);
     const recommendations = [];
-    // Recommendation 1: Optimal study time
     if (patterns.preferredStudyHours.length > 0) {
         const hours = patterns.preferredStudyHours.map((h) => `${h}:00`).join(", ");
         recommendations.push({
@@ -164,7 +143,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             },
         });
     }
-    // Recommendation 2: Focus duration adjustment
     if (patterns.averageSessionDuration < 25) {
         recommendations.push({
             userId,
@@ -191,7 +169,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             },
         });
     }
-    // Recommendation 3: Subject priority
     if (patterns.weakSubjects.length > 0) {
         recommendations.push({
             userId,
@@ -204,7 +181,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             },
         });
     }
-    // Recommendation 4: Productivity-based workload
     if (patterns.averageProductivity < 50) {
         recommendations.push({
             userId,
@@ -217,7 +193,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             },
         });
     }
-    // Recommendation 5: Streak motivation
     if (patterns.streakData.current === 0 && patterns.streakData.longest > 0) {
         recommendations.push({
             userId,
@@ -230,7 +205,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             },
         });
     }
-    // Recommendation 6: Study Technique for Weak Subjects
     if (patterns.weakSubjects.length > 0) {
         recommendations.push({
             userId,
@@ -244,7 +218,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 7: Wellness Check
     if (patterns.averageProductivity < 40) {
         recommendations.push({
             userId,
@@ -258,7 +231,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 8: Habit Challenge
     recommendations.push({
         userId,
         type: client_1.RecommendationType.HABIT_CHALLENGE_PROMPT,
@@ -269,7 +241,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             challengeType: "ACTIVE_RECALL_21_DAY"
         }
     });
-    // Recommendation 9: Interleaved Practice (Advanced)
     if (patterns.strongSubjects.length > 1) {
         recommendations.push({
             userId,
@@ -283,7 +254,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 10: Active Error Log
     if (patterns.weakSubjects.length > 0) {
         recommendations.push({
             userId,
@@ -297,7 +267,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 11: Grounding for Focus (Wellness)
     if (patterns.averageProductivity < 30) {
         recommendations.push({
             userId,
@@ -311,7 +280,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 12: Pomodoro Plus
     if (patterns.averageSessionDuration > 50) {
         recommendations.push({
             userId,
@@ -325,7 +293,6 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Recommendation 13: Targeted Weakness Intervention
     if (patterns.correlatedWeaknesses.includes("PERFORMANCE_ANXIETY")) {
         recommendations.push({
             userId,
@@ -351,15 +318,11 @@ const generateRecommendations = (userId) => __awaiter(void 0, void 0, void 0, fu
             }
         });
     }
-    // Save recommendations to database
     const created = yield prisma_1.default.aIRecommendation.createMany({
         data: recommendations,
     });
     return { created: created.count, recommendations };
 });
-/**
- * Get user's recommendations
- */
 const getUserRecommendations = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, includeApplied = false) {
     const where = { userId };
     if (!includeApplied) {
@@ -371,9 +334,6 @@ const getUserRecommendations = (userId_1, ...args_1) => __awaiter(void 0, [userI
     });
     return recommendations;
 });
-/**
- * Apply a recommendation
- */
 const applyRecommendation = (recommendationId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const recommendation = yield prisma_1.default.aIRecommendation.findUnique({
         where: { id: recommendationId },
@@ -390,9 +350,6 @@ const applyRecommendation = (recommendationId, userId) => __awaiter(void 0, void
     });
     return updated;
 });
-/**
- * Dismiss a recommendation
- */
 const dismissRecommendation = (recommendationId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const recommendation = yield prisma_1.default.aIRecommendation.findUnique({
         where: { id: recommendationId },

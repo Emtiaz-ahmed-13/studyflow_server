@@ -3,9 +3,6 @@ import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import { SubjectService } from "./subject.services";
 
-/**
- * Create a new subject
- */
 const createSubject = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user?.userId;
     const data = req.body;
@@ -20,9 +17,6 @@ const createSubject = catchAsync(async (req: Request & { user?: any }, res: Resp
     });
 });
 
-/**
- * Get all subjects for the authenticated user
- */
 const getMySubjects = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user?.userId;
     const { searchTerm, page, limit } = req.query;
@@ -43,9 +37,6 @@ const getMySubjects = catchAsync(async (req: Request & { user?: any }, res: Resp
     });
 });
 
-/**
- * Get a single subject by ID
- */
 const getSubjectById = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user?.userId;
     const { id } = req.params;
@@ -59,10 +50,6 @@ const getSubjectById = catchAsync(async (req: Request & { user?: any }, res: Res
         data: result,
     });
 });
-
-/**
- * Update a subject
- */
 const updateSubject = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user?.userId;
     const { id } = req.params;
@@ -77,10 +64,6 @@ const updateSubject = catchAsync(async (req: Request & { user?: any }, res: Resp
         data: result,
     });
 });
-
-/**
- * Delete a subject
- */
 const deleteSubject = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user?.userId;
     const { id } = req.params;

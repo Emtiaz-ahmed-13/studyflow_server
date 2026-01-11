@@ -17,10 +17,6 @@ const config_1 = __importDefault(require("../../config"));
 const jwtHelpers_1 = require("../../helpers/jwtHelpers");
 const ApiError_1 = __importDefault(require("../errors/ApiError"));
 const rbac_utils_1 = require("../utils/rbac.utils");
-/**
- * Role-based authentication middleware
- * @param roles - Array of allowed roles
- */
 const auth = (...roles) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -43,10 +39,6 @@ const auth = (...roles) => {
         }
     });
 };
-/**
- * Permission-based authentication middleware
- * @param requiredPermissions - Array of required permissions
- */
 const checkPermission = (...requiredPermissions) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         try {

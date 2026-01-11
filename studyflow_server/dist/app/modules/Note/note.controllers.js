@@ -75,10 +75,51 @@ const deleteNote = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
         data: null,
     });
 }));
+const getMarketplaceNotes = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { subjectId, searchTerm, minRating, page, limit } = req.query;
+    const result = yield note_services_1.NoteService.getMarketplaceNotes({
+        subjectId: subjectId,
+        searchTerm: searchTerm,
+        minRating: minRating,
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 20,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Marketplace notes retrieved successfully",
+        data: result.data,
+        meta: result.meta,
+    });
+}));
+const rateNote = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { rating, comment } = req.body;
+    const result = yield note_services_1.NoteService.rateNote((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId, req.params.id, rating, comment);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Note rated successfully",
+        data: result,
+    });
+}));
+const generateFlashcards = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const result = yield note_services_1.NoteService.generateFlashcards((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId, req.params.id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Flashcards generated successfully",
+        data: result,
+    });
+}));
 exports.NoteController = {
     createNote,
     getMyNotes,
     getNoteById,
     updateNote,
     deleteNote,
+    getMarketplaceNotes,
+    rateNote,
+    generateFlashcards
 };

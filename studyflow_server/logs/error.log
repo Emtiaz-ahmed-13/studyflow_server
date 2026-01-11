@@ -1,0 +1,6 @@
+{"duration":"869ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:09:20","url":"/api/v1/ai-chat/start"}
+{"duration":"44ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:09:20","url":"/api/v1/ai-chat/start"}
+{"duration":"704ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:14:44","url":"/api/v1/ai-chat/start"}
+{"duration":"59ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:14:44","url":"/api/v1/ai-chat/start"}
+{"duration":"120ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:21:49","url":"/api/v1/ai-chat/start"}
+{"duration":"10ms","level":"error","message":"Request completed","method":"POST","statusCode":500,"timestamp":"2026-01-08 14:21:49","url":"/api/v1/ai-chat/start"}

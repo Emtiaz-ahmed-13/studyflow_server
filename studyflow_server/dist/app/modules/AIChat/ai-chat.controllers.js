@@ -12,40 +12,45 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthControllers = void 0;
+exports.AIChatControllers = void 0;
 const catchAsync_1 = __importDefault(require("../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../shared/sendResponse"));
-const auth_services_1 = require("./auth.services");
-const login = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield auth_services_1.AuthServices.login(req.body);
+const ai_chat_services_1 = require("./ai-chat.services");
+const startChat = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { readingMaterialId } = req.body;
+    const result = yield ai_chat_services_1.AIChatServices.startChat((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId, readingMaterialId);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
-        message: "Logged In Successful.",
+        message: "PDF Chat Session Started",
         data: result,
     });
 }));
-const register = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield auth_services_1.AuthServices.register(req.body);
-    (0, sendResponse_1.default)(res, {
-        statusCode: 201,
-        success: true,
-        message: "User Registered Successfully.",
-        data: result,
-    });
-}));
-const refreshToken = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { refreshToken } = req.body;
-    const result = yield auth_services_1.AuthServices.refreshToken(refreshToken);
+const sendMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { sessionId, message } = req.body;
+    const result = yield ai_chat_services_1.AIChatServices.sendMessage((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId, sessionId, message);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Access Token Refreshed Successfully.",
+        message: "Message sent successfully",
         data: result,
     });
 }));
-exports.AuthControllers = {
-    login,
-    register,
-    refreshToken,
+const getChatHistory = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { id } = req.params;
+    const result = yield ai_chat_services_1.AIChatServices.getChatHistory((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Chat history retrieved",
+        data: result,
+    });
+}));
+exports.AIChatControllers = {
+    startChat,
+    sendMessage,
+    getChatHistory
 };

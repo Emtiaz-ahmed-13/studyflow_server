@@ -20,4 +20,5 @@ exports.default = {
     gemini: {
         api_key: process.env.GEMINI_API_KEY || "",
     },
+    bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS || 12,
 };

@@ -12,40 +12,48 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthControllers = void 0;
+exports.AIVivaControllers = void 0;
 const catchAsync_1 = __importDefault(require("../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../shared/sendResponse"));
-const auth_services_1 = require("./auth.services");
-const login = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield auth_services_1.AuthServices.login(req.body);
+const ai_viva_services_1 = require("./ai-viva.services");
+const startSession = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // @ts-ignore
+    const userId = req.user.id;
+    const { topic, subjectId } = req.body;
+    const result = yield ai_viva_services_1.AIVivaServices.startSession(userId, topic, subjectId);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
-        message: "Logged In Successful.",
+        message: "AI Viva Session Started",
         data: result,
     });
 }));
-const register = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield auth_services_1.AuthServices.register(req.body);
-    (0, sendResponse_1.default)(res, {
-        statusCode: 201,
-        success: true,
-        message: "User Registered Successfully.",
-        data: result,
-    });
-}));
-const refreshToken = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { refreshToken } = req.body;
-    const result = yield auth_services_1.AuthServices.refreshToken(refreshToken);
+const submitResponse = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // @ts-ignore
+    const userId = req.user.id;
+    const { sessionId, answerText } = req.body;
+    const result = yield ai_viva_services_1.AIVivaServices.submitResponse(sessionId, userId, answerText);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Access Token Refreshed Successfully.",
+        message: "Response submitted successfully",
         data: result,
     });
 }));
-exports.AuthControllers = {
-    login,
-    register,
-    refreshToken,
+const endSession = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // @ts-ignore
+    const userId = req.user.id;
+    const { sessionId } = req.body;
+    const result = yield ai_viva_services_1.AIVivaServices.endSession(sessionId, userId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Session completed successfully",
+        data: result,
+    });
+}));
+exports.AIVivaControllers = {
+    startSession,
+    submitResponse,
+    endSession
 };

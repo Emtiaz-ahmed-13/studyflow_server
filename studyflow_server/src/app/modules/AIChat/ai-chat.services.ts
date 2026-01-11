@@ -3,38 +3,62 @@ import prisma from "../../shared/prisma";
 import { IAIChatMessage } from "./ai-chat.interface";
 
 
-const startChat = async (userId: string, readingMaterialId: string) => {
-    const readingMaterial = await prisma.readingMaterial.findUnique({
-        where: { id: readingMaterialId }
-    });
+const startChat = async (userId: string, readingMaterialId?: string) => {
+    try {
+        console.log('Starting chat for user:', userId, 'with material:', readingMaterialId);
 
-    if (!readingMaterial) {
-        throw new ApiError(404, "Reading material found");
-    }
-
-    if (readingMaterial.userId !== userId) {
-        throw new ApiError(403, "Unauthorized");
-    }
-    const session = await prisma.aIChatSession.create({
-        data: {
+        let initialMessage = "Hello! I'm your AI study assistant. Ask me anything about your studies!";
+        let sessionData: any = {
             userId,
-            readingMaterialId,
-            messages: [
-                {
-                    role: "ai",
-                    content: `Hello! I've read "${readingMaterial.title}". Ask me anything about it!`,
-                    timestamp: new Date()
-                }
-            ]
-        },
-        include: {
-            readingMaterial: {
-                select: { title: true }
-            }
-        }
-    });
+            messages: []
+        };
 
-    return session;
+        if (readingMaterialId) {
+            const readingMaterial = await prisma.readingMaterial.findUnique({
+                where: { id: readingMaterialId }
+            });
+
+            if (!readingMaterial) {
+                throw new ApiError(404, "Reading material not found");
+            }
+
+            if (readingMaterial.userId !== userId) {
+                throw new ApiError(403, "Unauthorized");
+            }
+
+            sessionData.readingMaterialId = readingMaterialId;
+            initialMessage = `Hello! I've read "${readingMaterial.title}". Ask me anything about it!`;
+        }
+
+        sessionData.messages = [
+            {
+                role: "ai",
+                content: initialMessage,
+                timestamp: new Date()
+            }
+        ];
+
+        console.log('Creating session with data:', JSON.stringify(sessionData, null, 2));
+
+        const session = await prisma.aIChatSession.create({
+            data: sessionData,
+            include: {
+                readingMaterial: {
+                    select: { title: true }
+                }
+            }
+        });
+
+        console.log('Session created successfully:', session.id);
+
+        return {
+            sessionId: session.id,
+            initialMessage: initialMessage
+        };
+    } catch (error) {
+        console.error('Error in startChat:', error);
+        throw error;
+    }
 };
 
 const sendMessage = async (userId: string, sessionId: string, message: string) => {
@@ -69,14 +93,19 @@ const sendMessage = async (userId: string, sessionId: string, message: string) =
     });
 
     return {
-        reply: aiResponse,
-        history: updatedSession.messages
+        response: aiResponse,
+        sessionId: session.id
     };
 };
 
 const getChatHistory = async (userId: string, sessionId: string) => {
     const session = await prisma.aIChatSession.findUnique({
-        where: { id: sessionId }
+        where: { id: sessionId },
+        include: {
+            readingMaterial: {
+                select: { title: true }
+            }
+        }
     });
 
     if (!session) {
@@ -87,7 +116,9 @@ const getChatHistory = async (userId: string, sessionId: string) => {
         throw new ApiError(403, "Unauthorized");
     }
 
-    return session;
+    return {
+        session: session
+    };
 };
 
 export const AIChatServices = {

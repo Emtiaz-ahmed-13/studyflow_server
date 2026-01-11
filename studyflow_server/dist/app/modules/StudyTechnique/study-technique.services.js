@@ -115,7 +115,7 @@ const getAnalytics = (userId) => __awaiter(void 0, void 0, void 0, function* () 
             effectivenessByType[tech.type] = { count: 0, totalEffectiveness: 0, totalDuration: 0 };
         }
         effectivenessByType[tech.type].count += 1;
-        effectivenessByType[tech.type].totalDuration += tech.duration;
+        effectivenessByType[tech.type].totalDuration += (tech.duration || 0);
         if (tech.effectiveness) {
             effectivenessByType[tech.type].totalEffectiveness += tech.effectiveness;
         }

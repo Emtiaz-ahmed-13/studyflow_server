@@ -16,9 +16,6 @@ exports.AIRecommendationController = void 0;
 const catchAsync_1 = __importDefault(require("../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../shared/sendResponse"));
 const ai_recommendation_services_1 = require("./ai-recommendation.services");
-/**
- * Get user's AI recommendations
- */
 const getMyRecommendations = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
@@ -31,9 +28,6 @@ const getMyRecommendations = (0, catchAsync_1.default)((req, res) => __awaiter(v
         data: result,
     });
 }));
-/**
- * Generate new AI recommendations
- */
 const generateNewRecommendations = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
@@ -45,9 +39,6 @@ const generateNewRecommendations = (0, catchAsync_1.default)((req, res) => __awa
         data: result,
     });
 }));
-/**
- * Apply a recommendation
- */
 const applyRecommendation = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
@@ -60,9 +51,6 @@ const applyRecommendation = (0, catchAsync_1.default)((req, res) => __awaiter(vo
         data: result,
     });
 }));
-/**
- * Dismiss a recommendation
- */
 const dismissRecommendation = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
