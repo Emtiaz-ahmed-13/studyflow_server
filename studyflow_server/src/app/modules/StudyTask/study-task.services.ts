@@ -1,5 +1,6 @@
 import ApiError from "../../errors/ApiError";
 import prisma from "../../shared/prisma";
+import { GamificationServices } from "../Gamification/gamification.services";
 import { ICreateStudyTask, IStudyTaskFilters, IUpdateStudyTask } from "./study-task.interface";
 
 const createStudyTask = async (userId: string, data: ICreateStudyTask) => {
@@ -93,6 +94,11 @@ const updateStudyTask = async (id: string, userId: string, data: IUpdateStudyTas
         data,
         include: { studyPlan: true },
     });
+
+    // Award XP if task is marked complete for the first time
+    if (data.completed === true && existing.completed === false) {
+        await GamificationServices.addXp(userId, 20);
+    }
 
     return updated;
 };

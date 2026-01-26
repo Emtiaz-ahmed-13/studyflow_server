@@ -1,3 +1,4 @@
+import geminiAI from "../../../config/gemini.config";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../shared/prisma";
 import { IAIChatMessage } from "./ai-chat.interface";
@@ -75,8 +76,18 @@ const sendMessage = async (userId: string, sessionId: string, message: string) =
         throw new ApiError(403, "Unauthorized");
     }
 
-    const context = session.readingMaterial.content?.substring(0, 500) || "";
-    const aiResponse = `[AI Analysis of ${session.readingMaterial.title}]: Based on the text "${context}...", here is the answer to "${message}". (This is a mock response)`;
+    // Build context-aware prompt
+    let prompt = `User question: ${message}\n\n`;
+
+    if (session.readingMaterial && session.readingMaterial.content) {
+        const materialContext = session.readingMaterial.content.substring(0, 4000); // Limit context size
+        prompt = `The user is studying the following material titled "${session.readingMaterial.title}":\n\n---START OF MATERIAL---\n${materialContext}\n---END OF MATERIAL---\n\nBased ONLY on the content above (if relevant), answer the user's question. If the information isn't in the material, use your general knowledge but mention that it wasn't in the source.\n\nUser question: ${message}`;
+    } else {
+        prompt = `You are a helpful AI study assistant. Answer the user's question clearly and concisely.\n\nUser question: ${message}`;
+    }
+
+    // Get real AI response
+    const aiResponse = await geminiAI.generateContent(prompt);
 
     const currentMessages = session.messages as unknown as IAIChatMessage[];
     const newMessages = [

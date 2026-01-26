@@ -1,4 +1,5 @@
 import prisma from "../../shared/prisma";
+import { GamificationServices } from "../Gamification/gamification.services";
 import { ICreateMeditation, ICreateWellnessActivity } from "./wellness.interface";
 
 const createMeditation = async (userId: string, data: ICreateMeditation) => {
@@ -9,6 +10,10 @@ const createMeditation = async (userId: string, data: ICreateMeditation) => {
             completed: true,
         },
     });
+
+    // Award XP for meditation
+    await GamificationServices.addXp(userId, 15);
+
     return result;
 };
 
@@ -28,6 +33,10 @@ const createWellnessActivity = async (userId: string, data: ICreateWellnessActiv
             date: data.date ? new Date(data.date) : new Date(),
         },
     });
+
+    // Award XP for wellness activity
+    await GamificationServices.addXp(userId, 10);
+
     return result;
 };
 

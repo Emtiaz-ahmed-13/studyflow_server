@@ -1,6 +1,7 @@
 import { StudyTechnique } from "@prisma/client";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../shared/prisma";
+import { GamificationServices } from "../Gamification/gamification.services";
 import { ICreateStudyTechnique, IUpdateStudyTechnique } from "./study-technique.interface";
 
 const createTechnique = async (userId: string, data: ICreateStudyTechnique): Promise<StudyTechnique> => {
@@ -20,6 +21,9 @@ const createTechnique = async (userId: string, data: ICreateStudyTechnique): Pro
             userId,
         },
     });
+
+    // Add XP for using a study technique
+    await GamificationServices.addXp(userId, 50);
 
     return result;
 };

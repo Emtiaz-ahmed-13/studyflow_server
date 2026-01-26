@@ -1,4 +1,5 @@
 import { MaterialType, ReadingMaterial } from "@prisma/client";
+import pdf from "pdf-parse";
 import imagekit from "../../config/imagekit.config";
 import ApiError from "../../errors/ApiError";
 import prisma from "../../shared/prisma";
@@ -11,6 +12,8 @@ const uploadReadingMaterial = async (
     data: ICreateReadingMaterial
 ): Promise<ReadingMaterial> => {
     let fileUrl = data.fileUrl;
+    let content = data.content;
+
     if (file) {
         try {
             const uploadResponse = await imagekit.upload({
@@ -19,8 +22,15 @@ const uploadReadingMaterial = async (
                 folder: "/studyflow/reading-materials",
             });
             fileUrl = uploadResponse.url;
+
+            // Extract text from PDF if it's a PDF file
+            if (file.mimetype === "application/pdf") {
+                const pdfData = await pdf(file.buffer);
+                content = pdfData.text;
+            }
         } catch (error) {
-            throw new ApiError(500, "ImageKit Upload Failed");
+            console.error("Upload/Parse Error:", error);
+            throw new ApiError(500, "Failed to process PDF file");
         }
     }
 
@@ -47,7 +57,7 @@ const uploadReadingMaterial = async (
     }
 
     // Ensure type is correct if not PDF and no file uploaded
-    if (!file && !data.content && !fileUrl) {
+    if (!file && !content && !fileUrl) {
         throw new ApiError(400, "Either a PDF file, text content, or a valid URL is required");
     }
 
@@ -56,6 +66,7 @@ const uploadReadingMaterial = async (
             ...data,
             userId,
             fileUrl,
+            content,
             type,
             metadata,
             topics: data.topics || [],
